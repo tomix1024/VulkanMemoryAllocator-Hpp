@@ -283,7 +283,7 @@ public class Generate {
                     """, entries, name));
             }
         }
-        Files.writeString(Path.of("vk_mem_alloc_enums.hpp"), processTemplate("""
+        Files.writeString(Path.of("include/vk_mem_alloc_enums.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
 
@@ -446,7 +446,7 @@ public class Generate {
                                              "$0 is not nothrow_move_constructible!");
                     """, fields, name));
         }
-        Files.writeString(Path.of("vk_mem_alloc_structs.hpp"), processTemplate("""
+        Files.writeString(Path.of("include/vk_mem_alloc_structs.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_STRUCTS_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_STRUCTS_HPP
 
@@ -768,7 +768,7 @@ public class Generate {
         ifdef.goTo(declarations, -1);
         ifdef.goTo(definitions, -1);
 
-        Files.writeString(Path.of("vk_mem_alloc_handles.hpp"), processTemplate("""
+        Files.writeString(Path.of("include/vk_mem_alloc_handles.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_HANDLES_HPP
 
@@ -778,7 +778,7 @@ public class Generate {
                 #endif
                 """, declarations.toString()));
 
-        Files.writeString(Path.of("vk_mem_alloc_funcs.hpp"), processTemplate("""
+        Files.writeString(Path.of("include/vk_mem_alloc_funcs.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_FUNCS_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_FUNCS_HPP
 
@@ -790,7 +790,7 @@ public class Generate {
     }
 
     public static void main(String[] args) throws Exception {
-        String orig = Files.readString(Path.of("vk_mem_alloc.h"))
+        String orig = Files.readString(Path.of("include/vk_mem_alloc.h"))
                 .replaceAll("/\\*[\\s\\S]*?\\*/", "") // Delete multi-line comments
                 .replaceAll("//.*", ""); // Delete single-line comments
         orig = orig.substring(0, orig.indexOf("#ifdef VMA_IMPLEMENTATION")); // Strip implementation part
