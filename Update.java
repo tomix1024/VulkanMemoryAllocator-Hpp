@@ -57,6 +57,12 @@ public class Update {
             return;
         }
 
+        if (!Files.exists(Path.of("VulkanMemoryAllocator/.git")) || !Files.exists(Path.of("Vulkan-Hpp/.git"))) {
+            System.out.println("Initializing submodules...");
+            exec(".", "git", "submodule", "update");
+            System.out.println();
+        }
+
         System.out.println("Updating VulkanMemoryAllocator...");
         exec("VulkanMemoryAllocator", "git", "checkout", args[0]);
         System.out.println();
