@@ -83,7 +83,7 @@ namespace VMA_HPP_NAMESPACE {
     }
 
   private:
-    VmaPool m_pool;
+    VmaPool m_pool = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(Pool) == sizeof(VmaPool),
                            "handle and wrapper have different size!");
@@ -130,7 +130,7 @@ namespace VMA_HPP_NAMESPACE {
     }
 
   private:
-    VmaAllocation m_allocation;
+    VmaAllocation m_allocation = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(Allocation) == sizeof(VmaAllocation),
                            "handle and wrapper have different size!");
@@ -177,7 +177,7 @@ namespace VMA_HPP_NAMESPACE {
     }
 
   private:
-    VmaDefragmentationContext m_defragmentationContext;
+    VmaDefragmentationContext m_defragmentationContext = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(DefragmentationContext) == sizeof(VmaDefragmentationContext),
                            "handle and wrapper have different size!");
@@ -224,7 +224,7 @@ namespace VMA_HPP_NAMESPACE {
     }
 
   private:
-    VmaVirtualAllocation m_virtualAllocation;
+    VmaVirtualAllocation m_virtualAllocation = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(VirtualAllocation) == sizeof(VmaVirtualAllocation),
                            "handle and wrapper have different size!");
@@ -682,7 +682,7 @@ namespace VMA_HPP_NAMESPACE {
 
 #endif
   private:
-    VmaAllocator m_allocator;
+    VmaAllocator m_allocator = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(Allocator) == sizeof(VmaAllocator),
                            "handle and wrapper have different size!");
@@ -799,7 +799,7 @@ namespace VMA_HPP_NAMESPACE {
 
 #endif
   private:
-    VmaVirtualBlock m_virtualBlock;
+    VmaVirtualBlock m_virtualBlock = {};
   };
   VULKAN_HPP_STATIC_ASSERT(sizeof(VirtualBlock) == sizeof(VmaVirtualBlock),
                            "handle and wrapper have different size!");

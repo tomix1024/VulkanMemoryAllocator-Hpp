@@ -119,7 +119,7 @@ public class Generate {
     }
 
     record TemplateEntry<T>(T data, int position) {
-        static final Pattern loopPattern = Pattern.compile("([ \\t]*)\\{\\{\\{([\\w\\W]+?)}}}\n");
+        static final Pattern loopPattern = Pattern.compile("\\{\\{\\{([\\w\\W]+?)}}}\n");
         static final Pattern entryPattern = Pattern.compile("\\$\\{(.*?\\^)?(.*?)(\\$.*?)?}");
     }
 
@@ -159,8 +159,9 @@ public class Generate {
         while (loopMatcher.find()) {
             content.append(template, lastIndex, loopMatcher.start());
             lastIndex = loopMatcher.end();
-            String indent = loopMatcher.group(1);
-            String entryTemplate = loopMatcher.group(2);
+            int nl = template.lastIndexOf('\n', loopMatcher.start()) + 1;
+            String indent = "\n" + " ".repeat(loopMatcher.start() - nl);
+            String entryTemplate = loopMatcher.group(1);
             Matcher entryMatcher = TemplateEntry.entryPattern.matcher(entryTemplate);
             List<IntFunction<String>> entryTextParts = new ArrayList<>();
             int li = 0;
@@ -194,8 +195,7 @@ public class Generate {
             entryTextParts.add(i -> lastPart);
             for (int i = 0; i < entries.size(); i++) {
                 ifdef = ifdef.goTo(content, entries.get(i).position);
-                if (i != 0) content.append("\n");
-                content.append(indent);
+                if (i != 0) content.append(indent);
                 for (var e : entryTextParts) content.append(e.apply(i));
             }
             ifdef = ifdef.goTo(content, sourcePosition);
@@ -208,7 +208,7 @@ public class Generate {
 
     static void generateEnums(String orig, Ifdef.Range ifdef) throws IOException {
         record Entry(String name, String originalName) {}
-        StringBuilder content = new StringBuilder(), vkContent = new StringBuilder();
+        StringBuilder content = new StringBuilder();
         Pattern typedefPattern = Pattern.compile("typedef\\s+enum\\s+Vma(\\w+)");
         Pattern entryPattern = Pattern.compile("(VMA_\\w+)[^,}]*");
         Matcher typedefMatcher = typedefPattern.matcher(orig);
@@ -235,67 +235,67 @@ public class Generate {
 
             content.append(processTemplate(ifdef, typedefMatcher.start(), """
                     
-                    enum class $0$1 {
-                      {{{e${name} = ${originalName}${,$}}}}
-                    };
+                    namespace VMA_HPP_NAMESPACE {
                     
-                    VULKAN_HPP_INLINE std::string to_string($0 value) {
-                      {{{if (value == $0::e${name}) return "${name}";}}}
-                      return "invalid ( " + VULKAN_HPP_NAMESPACE::toHexString(static_cast<uint32_t>(value)) + " )";
+                      enum class $0$1 {
+                        {{{e${name} = ${originalName}${,$}}}}
+                      };
+                    
+                      VULKAN_HPP_INLINE std::string to_string($0 value) {
+                        {{{if (value == $0::e${name}) return "${name}";}}}
+                        return "invalid ( " + VULKAN_HPP_NAMESPACE::toHexString(static_cast<uint32_t>(value)) + " )";
+                      }
                     }
                     """, entries, name, flagBits ? (" : Vma" + flags) : ""));
             if (flagBits) {
                 content.append(processTemplate(ifdef, typedefMatcher.start(), """
                         
-                        using $1 = VULKAN_HPP_NAMESPACE::Flags<$0>;
-                                            
-                        VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator|($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
-                          return $1(bit0) | bit1;
+                        namespace VULKAN_HPP_NAMESPACE {
+                          template<> struct FlagTraits<VMA_HPP_NAMESPACE::$0> {
+                            enum : VkFlags {
+                              allFlags =
+                                {{{${ ^|} VkFlags(VMA_HPP_NAMESPACE::$0::e${name})}}}
+                            };
+                          };
                         }
                         
-                        VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator&($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
-                          return $1(bit0) & bit1;
-                        }
+                        namespace VMA_HPP_NAMESPACE {
                         
-                        VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator^($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
-                          return $1(bit0) ^ bit1;
-                        }
+                          using $1 = VULKAN_HPP_NAMESPACE::Flags<$0>;
                         
-                        VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator~($0 bits) VULKAN_HPP_NOEXCEPT {
-                          return ~($1(bits));
-                        }
+                          VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator|($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
+                            return $1(bit0) | bit1;
+                          }
                         
-                        VULKAN_HPP_INLINE std::string to_string($1 value) {
-                          if (!value) return "{}";
-                          std::string result;
-                          {{{if (value & $0::e${name}) result += "${name} | ";}}}
-                          return "{ " + result.substr( 0, result.size() - 3 ) + " }";
+                          VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator&($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
+                            return $1(bit0) & bit1;
+                          }
+                        
+                          VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator^($0 bit0, $0 bit1) VULKAN_HPP_NOEXCEPT {
+                            return $1(bit0) ^ bit1;
+                          }
+                        
+                          VULKAN_HPP_INLINE VULKAN_HPP_CONSTEXPR $1 operator~($0 bits) VULKAN_HPP_NOEXCEPT {
+                            return ~($1(bits));
+                          }
+                        
+                          VULKAN_HPP_INLINE std::string to_string($1 value) {
+                            if (!value) return "{}";
+                            std::string result;
+                            {{{if (value & $0::e${name}) result += "${name} | ";}}}
+                            return "{ " + result.substr( 0, result.size() - 3 ) + " }";
+                          }
                         }
                         """, entries, name, flags));
-                vkContent.append(processTemplate(ifdef, typedefMatcher.start(), """
-                    
-                    template<> struct FlagTraits<VMA_HPP_NAMESPACE::$0> {
-                      enum : VkFlags {
-                        allFlags =
-                          {{{${ ^|} VkFlags(VMA_HPP_NAMESPACE::$0::e${name})}}}
-                      };
-                    };
-                    """, entries, name));
             }
         }
         Files.writeString(Path.of("include/vk_mem_alloc_enums.hpp"), processTemplate("""
                 #ifndef VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
                 #define VULKAN_MEMORY_ALLOCATOR_ENUMS_HPP
-
-                namespace VMA_HPP_NAMESPACE {
-                  $0
-                }
-
-                namespace VULKAN_HPP_NAMESPACE {
-                  $1
-                }
+                $0
+                
                 #endif
-                """, content.toString(), vkContent.toString()));
+                """, content.toString()));
     }
 
     enum VarTag {
@@ -424,7 +424,10 @@ public class Generate {
                     #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
                       auto operator<=>($0 const &) const = default;
                     #else
-                      bool operator==($0 const &) const = default;
+                      bool operator==($0 const & rhs) const VULKAN_HPP_NOEXCEPT {
+                        {{{${return^    &&} ${name} == rhs.${name}}}}
+                        ;
+                      }
                     #endif
                     
                     #if !defined( VULKAN_HPP_NO_STRUCT_SETTERS )
@@ -521,7 +524,7 @@ public class Generate {
                       }
                     $2
                     private:
-                      Vma$0 m_$1;
+                      Vma$0 m_$1 = {};
                     };
                     VULKAN_HPP_STATIC_ASSERT(sizeof($0) == sizeof(Vma$0),
                                              "handle and wrapper have different size!");
