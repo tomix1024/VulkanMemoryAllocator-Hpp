@@ -1,26 +1,27 @@
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * <b>Java 16+</b>
- * <pre>{@code java Update.java [revision]}</pre>
- * Where {@code revision} is a <a href="https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator">VMA</a>
- * branch name or commit hash. Default = {@code master}
+ * <pre>{@code java Update.java vma_revision vk_hpp_revision}</pre>
+ * Where {@code *_revision} is a <a href="https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator">VMA</a>
+ * / <a href="https://github.com/KhronosGroup/Vulkan-Hpp">Vulkan-Hpp</a>
+ * branch name or commit hash.
  */
 public class Update {
 
-    private static String httpGet(String url, String errorMessage) throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setRequestMethod("GET");
-        connection.connect();
-        if (connection.getResponseCode() != 200) {
-            throw new Error(errorMessage + ": " + connection.getResponseCode() + " " + connection.getResponseMessage());
-        }
-        return new String(connection.getInputStream().readAllBytes());
+    private static void exec(String directory, String... command) throws IOException, InterruptedException {
+        ProcessBuilder generator = new ProcessBuilder(command);
+        generator.directory(new File(directory));
+        generator.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        generator.redirectError(ProcessBuilder.Redirect.INHERIT);
+        int code = generator.start().waitFor();
+        if (code != 0) System.exit(code);
     }
 
     private static String findRegex(String text, String regex, String errorMessage) {
@@ -51,31 +52,35 @@ public class Update {
     }
 
     public static void main(String[] args) throws Exception {
-        String revision = args.length > 0 ? args[0] : "master";
-        System.out.println("Updating VMA revision... " + revision);
+        if (args.length != 2) {
+            System.err.println("Usage: java Update.java vma_revision vk_hpp_revision");
+            return;
+        }
 
-        String sha = findRegex(httpGet("https://api.github.com/repos/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/commits?per_page=1&sha=" + revision,
-                "Failed to get commit hash"), "\"sha\"\\s*:\\s*\"(.+?)\"", "Cannot extract commit hash");
-        System.out.println("Commit hash: " + sha);
+        System.out.println("Updating VulkanMemoryAllocator...");
+        exec("VulkanMemoryAllocator", "git", "checkout", args[0]);
+        System.out.println();
 
-        String content = httpGet("https://raw.githubusercontent.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/" + sha + "/include/vk_mem_alloc.h",
-                "Failed to download vk_mem_alloc.h");
+        System.out.println("Updating Vulkan-Hpp...");
+        exec("Vulkan-Hpp", "git", "checkout", args[1]);
+        System.out.println();
+
+        Path vmaFile = Path.of("include/vk_mem_alloc.h");
+        Files.copy(Path.of("VulkanMemoryAllocator").resolve(vmaFile), vmaFile, StandardCopyOption.REPLACE_EXISTING);
+
+        String content = Files.readString(vmaFile);
         String version = findRegex(content, "<b>Version\\s*(.+?)\\s*</b>", "Cannot extract version");
         String vk = findVulkanVersion(content);
         System.out.println("VMA version: " + version);
         System.out.println("Vulkan version: " + vk);
-        Files.writeString(Path.of("include/vk_mem_alloc.h"), content);
+        System.out.println();
 
         Path readmePath = Path.of("README.md");
         Files.writeString(readmePath, replaceReadme(Files.readString(readmePath),
                 "VER", version,
-                "VK", vk,
-                "REV", "[" + sha + "](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/tree/" + sha + ") "));
+                "VK", vk));
 
         System.out.println("Generating C++ bindings...");
-        ProcessBuilder generator = new ProcessBuilder(System.getProperty("java.home") + "/bin/java", "Generate.java");
-        generator.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        generator.redirectError(ProcessBuilder.Redirect.INHERIT);
-        System.exit(generator.start().waitFor());
+        exec(".", System.getProperty("java.home") + "/bin/java", "Generate.java");
     }
 }

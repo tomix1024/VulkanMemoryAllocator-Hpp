@@ -2,8 +2,6 @@
 
 ### Supports Vulkan <!--VK-->1.3<!--/VK-->
 
-VMA revision: <!--REV-->[42be483bd5c6605e789e011aac684e0b95d05359](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/tree/42be483bd5c6605e789e011aac684e0b95d05359) <!--/REV-->
-
 This is a former fork of https://github.com/malte-v/VulkanMemoryAllocator-Hpp which is now maintained independently
 as discussed in [this PR](https://github.com/malte-v/VulkanMemoryAllocator-Hpp/pull/15).
 

@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * <b>Java 16+</b>
+ * <pre>{@code java Generate.java}</pre>
+ */
 public class Generate {
 
     /**
