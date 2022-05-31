@@ -426,7 +426,7 @@ public class Generate {
                       }
                       
                     #if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
-                      auto operator<=>($0 const &) const = default;
+                      bool operator==($0 const &) const = default;
                     #else
                       bool operator==($0 const & rhs) const VULKAN_HPP_NOEXCEPT {
                         {{{${return^    &&} ${name} == rhs.${name}}}}
