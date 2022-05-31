@@ -16,6 +16,9 @@ namespace VMA_HPP_NAMESPACE {
       , pfnFree(pfnFree_)
       , pUserData(pUserData_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DeviceMemoryCallbacks(DeviceMemoryCallbacks const &) VULKAN_HPP_NOEXCEPT = default;
+    DeviceMemoryCallbacks(VmaDeviceMemoryCallbacks const & rhs) VULKAN_HPP_NOEXCEPT : DeviceMemoryCallbacks(*reinterpret_cast<DeviceMemoryCallbacks const *>(&rhs)) {}
 #endif
 
     DeviceMemoryCallbacks& operator=(DeviceMemoryCallbacks const &) VULKAN_HPP_NOEXCEPT = default;
@@ -148,6 +151,9 @@ namespace VMA_HPP_NAMESPACE {
       , vkGetDeviceImageMemoryRequirements(vkGetDeviceImageMemoryRequirements_)
 #endif
       {}
+
+    VULKAN_HPP_CONSTEXPR VulkanFunctions(VulkanFunctions const &) VULKAN_HPP_NOEXCEPT = default;
+    VulkanFunctions(VmaVulkanFunctions const & rhs) VULKAN_HPP_NOEXCEPT : VulkanFunctions(*reinterpret_cast<VulkanFunctions const *>(&rhs)) {}
 #endif
 
     VulkanFunctions& operator=(VulkanFunctions const &) VULKAN_HPP_NOEXCEPT = default;
@@ -423,6 +429,9 @@ namespace VMA_HPP_NAMESPACE {
       , pTypeExternalMemoryHandleTypes(pTypeExternalMemoryHandleTypes_)
 #endif
       {}
+
+    VULKAN_HPP_CONSTEXPR AllocatorCreateInfo(AllocatorCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    AllocatorCreateInfo(VmaAllocatorCreateInfo const & rhs) VULKAN_HPP_NOEXCEPT : AllocatorCreateInfo(*reinterpret_cast<AllocatorCreateInfo const *>(&rhs)) {}
 #endif
 
     AllocatorCreateInfo& operator=(AllocatorCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -555,6 +564,9 @@ namespace VMA_HPP_NAMESPACE {
       , physicalDevice(physicalDevice_)
       , device(device_)
       {}
+
+    VULKAN_HPP_CONSTEXPR AllocatorInfo(AllocatorInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    AllocatorInfo(VmaAllocatorInfo const & rhs) VULKAN_HPP_NOEXCEPT : AllocatorInfo(*reinterpret_cast<AllocatorInfo const *>(&rhs)) {}
 #endif
 
     AllocatorInfo& operator=(AllocatorInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -627,6 +639,9 @@ namespace VMA_HPP_NAMESPACE {
       , blockBytes(blockBytes_)
       , allocationBytes(allocationBytes_)
       {}
+
+    VULKAN_HPP_CONSTEXPR Statistics(Statistics const &) VULKAN_HPP_NOEXCEPT = default;
+    Statistics(VmaStatistics const & rhs) VULKAN_HPP_NOEXCEPT : Statistics(*reinterpret_cast<Statistics const *>(&rhs)) {}
 #endif
 
     Statistics& operator=(Statistics const &) VULKAN_HPP_NOEXCEPT = default;
@@ -710,6 +725,9 @@ namespace VMA_HPP_NAMESPACE {
       , unusedRangeSizeMin(unusedRangeSizeMin_)
       , unusedRangeSizeMax(unusedRangeSizeMax_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DetailedStatistics(DetailedStatistics const &) VULKAN_HPP_NOEXCEPT = default;
+    DetailedStatistics(VmaDetailedStatistics const & rhs) VULKAN_HPP_NOEXCEPT : DetailedStatistics(*reinterpret_cast<DetailedStatistics const *>(&rhs)) {}
 #endif
 
     DetailedStatistics& operator=(DetailedStatistics const &) VULKAN_HPP_NOEXCEPT = default;
@@ -801,6 +819,9 @@ namespace VMA_HPP_NAMESPACE {
       , memoryHeap(memoryHeap_)
       , total(total_)
       {}
+
+    VULKAN_HPP_CONSTEXPR TotalStatistics(TotalStatistics const &) VULKAN_HPP_NOEXCEPT = default;
+    TotalStatistics(VmaTotalStatistics const & rhs) VULKAN_HPP_NOEXCEPT : TotalStatistics(*reinterpret_cast<TotalStatistics const *>(&rhs)) {}
 #endif
 
     TotalStatistics& operator=(TotalStatistics const &) VULKAN_HPP_NOEXCEPT = default;
@@ -871,6 +892,9 @@ namespace VMA_HPP_NAMESPACE {
       , usage(usage_)
       , budget(budget_)
       {}
+
+    VULKAN_HPP_CONSTEXPR Budget(Budget const &) VULKAN_HPP_NOEXCEPT = default;
+    Budget(VmaBudget const & rhs) VULKAN_HPP_NOEXCEPT : Budget(*reinterpret_cast<Budget const *>(&rhs)) {}
 #endif
 
     Budget& operator=(Budget const &) VULKAN_HPP_NOEXCEPT = default;
@@ -951,6 +975,9 @@ namespace VMA_HPP_NAMESPACE {
       , pUserData(pUserData_)
       , priority(priority_)
       {}
+
+    VULKAN_HPP_CONSTEXPR AllocationCreateInfo(AllocationCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    AllocationCreateInfo(VmaAllocationCreateInfo const & rhs) VULKAN_HPP_NOEXCEPT : AllocationCreateInfo(*reinterpret_cast<AllocationCreateInfo const *>(&rhs)) {}
 #endif
 
     AllocationCreateInfo& operator=(AllocationCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1066,6 +1093,9 @@ namespace VMA_HPP_NAMESPACE {
       , minAllocationAlignment(minAllocationAlignment_)
       , pMemoryAllocateNext(pMemoryAllocateNext_)
       {}
+
+    VULKAN_HPP_CONSTEXPR PoolCreateInfo(PoolCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    PoolCreateInfo(VmaPoolCreateInfo const & rhs) VULKAN_HPP_NOEXCEPT : PoolCreateInfo(*reinterpret_cast<PoolCreateInfo const *>(&rhs)) {}
 #endif
 
     PoolCreateInfo& operator=(PoolCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1179,6 +1209,9 @@ namespace VMA_HPP_NAMESPACE {
       , pUserData(pUserData_)
       , pName(pName_)
       {}
+
+    VULKAN_HPP_CONSTEXPR AllocationInfo(AllocationInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    AllocationInfo(VmaAllocationInfo const & rhs) VULKAN_HPP_NOEXCEPT : AllocationInfo(*reinterpret_cast<AllocationInfo const *>(&rhs)) {}
 #endif
 
     AllocationInfo& operator=(AllocationInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1279,6 +1312,9 @@ namespace VMA_HPP_NAMESPACE {
       , maxBytesPerPass(maxBytesPerPass_)
       , maxAllocationsPerPass(maxAllocationsPerPass_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DefragmentationInfo(DefragmentationInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    DefragmentationInfo(VmaDefragmentationInfo const & rhs) VULKAN_HPP_NOEXCEPT : DefragmentationInfo(*reinterpret_cast<DefragmentationInfo const *>(&rhs)) {}
 #endif
 
     DefragmentationInfo& operator=(DefragmentationInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1356,6 +1392,9 @@ namespace VMA_HPP_NAMESPACE {
       , srcAllocation(srcAllocation_)
       , dstTmpAllocation(dstTmpAllocation_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DefragmentationMove(DefragmentationMove const &) VULKAN_HPP_NOEXCEPT = default;
+    DefragmentationMove(VmaDefragmentationMove const & rhs) VULKAN_HPP_NOEXCEPT : DefragmentationMove(*reinterpret_cast<DefragmentationMove const *>(&rhs)) {}
 #endif
 
     DefragmentationMove& operator=(DefragmentationMove const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1424,6 +1463,9 @@ namespace VMA_HPP_NAMESPACE {
       : moveCount(moveCount_)
       , pMoves(pMoves_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DefragmentationPassMoveInfo(DefragmentationPassMoveInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    DefragmentationPassMoveInfo(VmaDefragmentationPassMoveInfo const & rhs) VULKAN_HPP_NOEXCEPT : DefragmentationPassMoveInfo(*reinterpret_cast<DefragmentationPassMoveInfo const *>(&rhs)) {}
 #endif
 
     DefragmentationPassMoveInfo& operator=(DefragmentationPassMoveInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1489,6 +1531,9 @@ namespace VMA_HPP_NAMESPACE {
       , allocationsMoved(allocationsMoved_)
       , deviceMemoryBlocksFreed(deviceMemoryBlocksFreed_)
       {}
+
+    VULKAN_HPP_CONSTEXPR DefragmentationStats(DefragmentationStats const &) VULKAN_HPP_NOEXCEPT = default;
+    DefragmentationStats(VmaDefragmentationStats const & rhs) VULKAN_HPP_NOEXCEPT : DefragmentationStats(*reinterpret_cast<DefragmentationStats const *>(&rhs)) {}
 #endif
 
     DefragmentationStats& operator=(DefragmentationStats const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1566,6 +1611,9 @@ namespace VMA_HPP_NAMESPACE {
       , flags(flags_)
       , pAllocationCallbacks(pAllocationCallbacks_)
       {}
+
+    VULKAN_HPP_CONSTEXPR VirtualBlockCreateInfo(VirtualBlockCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    VirtualBlockCreateInfo(VmaVirtualBlockCreateInfo const & rhs) VULKAN_HPP_NOEXCEPT : VirtualBlockCreateInfo(*reinterpret_cast<VirtualBlockCreateInfo const *>(&rhs)) {}
 #endif
 
     VirtualBlockCreateInfo& operator=(VirtualBlockCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1638,6 +1686,9 @@ namespace VMA_HPP_NAMESPACE {
       , flags(flags_)
       , pUserData(pUserData_)
       {}
+
+    VULKAN_HPP_CONSTEXPR VirtualAllocationCreateInfo(VirtualAllocationCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    VirtualAllocationCreateInfo(VmaVirtualAllocationCreateInfo const & rhs) VULKAN_HPP_NOEXCEPT : VirtualAllocationCreateInfo(*reinterpret_cast<VirtualAllocationCreateInfo const *>(&rhs)) {}
 #endif
 
     VirtualAllocationCreateInfo& operator=(VirtualAllocationCreateInfo const &) VULKAN_HPP_NOEXCEPT = default;
@@ -1715,6 +1766,9 @@ namespace VMA_HPP_NAMESPACE {
       , size(size_)
       , pUserData(pUserData_)
       {}
+
+    VULKAN_HPP_CONSTEXPR VirtualAllocationInfo(VirtualAllocationInfo const &) VULKAN_HPP_NOEXCEPT = default;
+    VirtualAllocationInfo(VmaVirtualAllocationInfo const & rhs) VULKAN_HPP_NOEXCEPT : VirtualAllocationInfo(*reinterpret_cast<VirtualAllocationInfo const *>(&rhs)) {}
 #endif
 
     VirtualAllocationInfo& operator=(VirtualAllocationInfo const &) VULKAN_HPP_NOEXCEPT = default;

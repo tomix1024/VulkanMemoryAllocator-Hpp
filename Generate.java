@@ -409,6 +409,9 @@ public class Generate {
                         ) VULKAN_HPP_NOEXCEPT
                         {{{${:^,} ${name}(${name}_)}}}
                         {}
+                    
+                      VULKAN_HPP_CONSTEXPR $0($0 const &) VULKAN_HPP_NOEXCEPT = default;
+                      $0(Vma$0 const & rhs) VULKAN_HPP_NOEXCEPT : $0(*reinterpret_cast<$0 const *>(&rhs)) {}
                     #endif
                     
                       $0& operator=($0 const &) VULKAN_HPP_NOEXCEPT = default;
