@@ -586,6 +586,13 @@ public class Generate {
             if (handle != null && name.equals("Destroy" + handle.name)) name = "destroy"; // E.g. Allocator::destroyAllocator -> Allocator::destroy
             String methodName = name.substring(0, 1).toLowerCase() + name.substring(1); // Generated method name
 
+            String tempShortenedMethodName = "";
+            // If this is a destroy method for a child object (e.g. destroyImage), add another method
+            if (handle != null && methodName.startsWith("destroy") && !methodName.equals("destroy")) {
+                tempShortenedMethodName = "destroy";
+            }
+            String shortenedMethodName = tempShortenedMethodName;
+
             // Find dependencies of array sizes
             Integer[] arrayByLengthIndex = new Integer[params.size()];
             for (int i = 0; i < params.size(); i++) {
@@ -658,7 +665,7 @@ public class Generate {
                     }
                 }
 
-                String generate(boolean definition, boolean customVectorAllocator) {
+                String generate(boolean definition, boolean customVectorAllocator, boolean useShortenedMethodName) {
                     if (outputs.size() >= 3) throw new Error("3+ mandatory outputs");
                     if (outputs.size() != 0 && !returnType.equals("void") && !returnType.equals("VULKAN_HPP_NAMESPACE::Result")) throw new Error("Both return value and output parameters");
                     if (outputs.size() >= 2 && params.get(outputs.get(0)).lenIfNotNull != null) throw new Error("2+ mandatory outputs with at least one array");
@@ -669,9 +676,16 @@ public class Generate {
                     } : returnType;
 
                     String decl = "";
+
+                    // Handle alternative shortened method name (e.g. destroy instead of destroyImage)
+                    if (!shortenedMethodName.isEmpty() && useShortenedMethodName == false)
+                    {
+                        decl += generate(definition, customVectorAllocator, true);
+                    }
+
                     // Generate template for vector allocator
                     if (enhanced && outputs.size() == 1 && params.get(outputs.get(0)).lenIfNotNull != null) {
-                        if (!customVectorAllocator) decl = generate(definition, true) + "\n";
+                        if (!customVectorAllocator) decl = generate(definition, true, useShortenedMethodName) + "\n";
                         decl += "template<typename VectorAllocator";
                         if (!definition) decl += " = std::allocator<" + params.get(outputs.get(0)).stripPtr() + ">";
                         if (customVectorAllocator) {
@@ -698,7 +712,7 @@ public class Generate {
                         if (!paramTypes.isEmpty()) s.append(",\n");
                         s.append("VectorAllocator& vectorAllocator");
                     }
-                    decl = processTemplate("$0$1($2)$3", decl, methodName, s.toString(), handle != null ? " const" : "");
+                    decl = processTemplate("$0$1($2)$3", decl, useShortenedMethodName ? shortenedMethodName : methodName, s.toString(), handle != null ? " const" : "");
                     if (!definition) return decl + ";\n";
 
                     s.setLength(0);
@@ -741,7 +755,7 @@ public class Generate {
                         else returnValue = "result, " + returnValue;
                         s.append("\nresultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
                         if (handle != null) s.append(handle.name).append("::");
-                        s.append(methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
+                        s.append(useShortenedMethodName ? shortenedMethodName : methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
                                 $0 {
@@ -759,10 +773,10 @@ public class Generate {
             if (handle != null) handle.ifdef = handle.ifdef.goTo(defs, funcMatcher.start());
             else ifdef = ifdef.goTo(defs, funcMatcher.start());
 
-            decls.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false));
-            defs.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false));
-            decls.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false));
-            defs.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false));
+            decls.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false, false));
+            defs.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false, false));
+            decls.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false, false));
+            defs.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false, false));
             if (sameSignatures) {
                 decls.append("#endif\n");
                 defs.append("#endif\n");

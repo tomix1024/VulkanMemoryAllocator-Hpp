@@ -350,8 +350,10 @@ namespace VMA_HPP_NAMESPACE {
                                                                  Pool* pool) const;
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+    void destroy(Pool pool) const;
     void destroyPool(Pool pool) const;
 #else
+    void destroy(Pool pool) const;
     void destroyPool(Pool pool) const;
 #endif
 
@@ -633,9 +635,13 @@ namespace VMA_HPP_NAMESPACE {
                                                                            VULKAN_HPP_NAMESPACE::Buffer* buffer) const;
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+    void destroy(VULKAN_HPP_NAMESPACE::Buffer buffer,
+                 Allocation allocation) const;
     void destroyBuffer(VULKAN_HPP_NAMESPACE::Buffer buffer,
                        Allocation allocation) const;
 #else
+    void destroy(VULKAN_HPP_NAMESPACE::Buffer buffer,
+                 Allocation allocation) const;
     void destroyBuffer(VULKAN_HPP_NAMESPACE::Buffer buffer,
                        Allocation allocation) const;
 #endif
@@ -660,9 +666,13 @@ namespace VMA_HPP_NAMESPACE {
                                                                           VULKAN_HPP_NAMESPACE::Image* image) const;
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+    void destroy(VULKAN_HPP_NAMESPACE::Image image,
+                 Allocation allocation) const;
     void destroyImage(VULKAN_HPP_NAMESPACE::Image image,
                       Allocation allocation) const;
 #else
+    void destroy(VULKAN_HPP_NAMESPACE::Image image,
+                 Allocation allocation) const;
     void destroyImage(VULKAN_HPP_NAMESPACE::Image image,
                       Allocation allocation) const;
 #endif

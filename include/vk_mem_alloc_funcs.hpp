@@ -191,10 +191,16 @@ namespace VMA_HPP_NAMESPACE {
   }
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  VULKAN_HPP_INLINE void Allocator::destroy(Pool pool) const {
+    vmaDestroyPool(m_allocator, static_cast<VmaPool>(pool));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyPool(Pool pool) const {
     vmaDestroyPool(m_allocator, static_cast<VmaPool>(pool));
   }
 #else
+  VULKAN_HPP_INLINE void Allocator::destroy(Pool pool) const {
+    vmaDestroyPool(m_allocator, static_cast<VmaPool>(pool));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyPool(Pool pool) const {
     vmaDestroyPool(m_allocator, static_cast<VmaPool>(pool));
   }
@@ -708,11 +714,19 @@ namespace VMA_HPP_NAMESPACE {
   }
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  VULKAN_HPP_INLINE void Allocator::destroy(VULKAN_HPP_NAMESPACE::Buffer buffer,
+                                            Allocation allocation) const {
+    vmaDestroyBuffer(m_allocator, static_cast<VkBuffer>(buffer), static_cast<VmaAllocation>(allocation));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyBuffer(VULKAN_HPP_NAMESPACE::Buffer buffer,
                                                   Allocation allocation) const {
     vmaDestroyBuffer(m_allocator, static_cast<VkBuffer>(buffer), static_cast<VmaAllocation>(allocation));
   }
 #else
+  VULKAN_HPP_INLINE void Allocator::destroy(VULKAN_HPP_NAMESPACE::Buffer buffer,
+                                            Allocation allocation) const {
+    vmaDestroyBuffer(m_allocator, static_cast<VkBuffer>(buffer), static_cast<VmaAllocation>(allocation));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyBuffer(VULKAN_HPP_NAMESPACE::Buffer buffer,
                                                   Allocation allocation) const {
     vmaDestroyBuffer(m_allocator, static_cast<VkBuffer>(buffer), static_cast<VmaAllocation>(allocation));
@@ -757,11 +771,19 @@ namespace VMA_HPP_NAMESPACE {
   }
 
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
+  VULKAN_HPP_INLINE void Allocator::destroy(VULKAN_HPP_NAMESPACE::Image image,
+                                            Allocation allocation) const {
+    vmaDestroyImage(m_allocator, static_cast<VkImage>(image), static_cast<VmaAllocation>(allocation));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyImage(VULKAN_HPP_NAMESPACE::Image image,
                                                  Allocation allocation) const {
     vmaDestroyImage(m_allocator, static_cast<VkImage>(image), static_cast<VmaAllocation>(allocation));
   }
 #else
+  VULKAN_HPP_INLINE void Allocator::destroy(VULKAN_HPP_NAMESPACE::Image image,
+                                            Allocation allocation) const {
+    vmaDestroyImage(m_allocator, static_cast<VkImage>(image), static_cast<VmaAllocation>(allocation));
+  }
   VULKAN_HPP_INLINE void Allocator::destroyImage(VULKAN_HPP_NAMESPACE::Image image,
                                                  Allocation allocation) const {
     vmaDestroyImage(m_allocator, static_cast<VkImage>(image), static_cast<VmaAllocation>(allocation));
