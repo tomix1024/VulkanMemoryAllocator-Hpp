@@ -382,6 +382,12 @@ public class Generate {
         public String stripPtr() {
             return type.substring(0, type.length() - 1);
         }
+
+        public String uniqueHandle() {
+            int colonIndex = type.lastIndexOf(":");
+
+            return (colonIndex > 0 ? type.substring(0, colonIndex + 1) : "") + "Unique" + type.substring(colonIndex > 0 ? colonIndex + 1 : 0, type.length()-1);
+        }
     }
 
     static List<String> generateStructs(String orig, Ifdef.Range ifdef) throws IOException {
@@ -567,6 +573,75 @@ public class Generate {
         declarations.append("\n\n");
         for (Handle h : handles.values()) declarations.append("class ").append(h.name).append(";\n");
 
+
+        declarations.append("""
+            #ifndef VULKAN_HPP_NO_SMART_HANDLE
+            template <typename OwnerType>
+            class ObjectDestroy
+            {
+            public:
+                ObjectDestroy() = default;
+
+                ObjectDestroy( OwnerType owner ) VULKAN_HPP_NOEXCEPT
+                    : m_owner( owner )
+                {}
+
+                OwnerType getOwner() const VULKAN_HPP_NOEXCEPT { return m_owner; }
+
+            protected:
+                template <typename T>
+                void destroy(T t) VULKAN_HPP_NOEXCEPT
+                {
+                    VULKAN_HPP_ASSERT( m_owner );
+                    m_owner.destroy( t );
+                }
+            private:
+                OwnerType                           m_owner               = {};
+            };
+
+            using NoParent = VULKAN_HPP_NAMESPACE::NoParent;
+
+            template <>
+            class ObjectDestroy<NoParent>
+            {
+            public:
+                ObjectDestroy() = default;
+            protected:
+                template <typename T>
+                void destroy(T t) VULKAN_HPP_NOEXCEPT
+                {
+                    t.destroy();
+                }
+            };
+            #endif /*VULKAN_HPP_NO_SMART_HANDLE*/
+            """);
+
+        // Unique handles...
+        for (Handle h : handles.values())
+        {
+            if (h.name.equals("DefragmentationContext") || // Allocator::beginDefragmentation/Allocator::endDefragmentation
+                h.name.equals("VirtualAllocation") ) // Allocator::virtualAllocate/Allocator::virtualFree
+                continue;
+
+                String parentType = (h.name.equals("Allocator") || h.name.equals("VirtualBlock")) ? "VMA_HPP_NAMESPACE::NoParent" : "VMA_HPP_NAMESPACE::Allocator";
+
+                declarations.append(processTemplate("""
+                    #ifndef VULKAN_HPP_NO_SMART_HANDLE
+                    }
+                    namespace VULKAN_HPP_NAMESPACE {
+                    template <typename Dispatch>
+                    class UniqueHandleTraits<VMA_HPP_NAMESPACE::$0, Dispatch>
+                    {
+                    public:
+                        using deleter = VMA_HPP_NAMESPACE::ObjectDestroy<$1>;
+                    };
+                    }
+                    namespace VMA_HPP_NAMESPACE {
+                    using Unique$0 = VULKAN_HPP_NAMESPACE::UniqueHandle<$0, void>;
+                    #endif /*VULKAN_HPP_NO_SMART_HANDLE*/
+                """, h.name, parentType));
+        }
+
         // Iterate VMA functions
         Pattern funcPattern = Pattern.compile("VMA_CALL_PRE\\s+(\\w+)\\s+VMA_CALL_POST\\s+vma(\\w+)\\s*(\\([\\s\\S]+?\\)\\s*;)");
         Matcher funcMatcher = funcPattern.matcher(orig);
@@ -588,7 +663,10 @@ public class Generate {
 
             String tempShortenedMethodName = "";
             // If this is a destroy method for a child object (e.g. destroyImage), add another method
-            if (handle != null && methodName.startsWith("destroy") && !methodName.equals("destroy")) {
+            if (handle != null && (
+                    (methodName.startsWith("destroy") && !methodName.equals("destroy")) ||
+                    methodName.equals("freeMemory")
+                )) {
                 tempShortenedMethodName = "destroy";
             }
             String shortenedMethodName = tempShortenedMethodName;
@@ -665,13 +743,23 @@ public class Generate {
                     }
                 }
 
-                String generate(boolean definition, boolean customVectorAllocator, boolean useShortenedMethodName) {
+                String generate(boolean definition, boolean customVectorAllocator, boolean useShortenedMethodName, boolean isCreateUnique) {
                     if (outputs.size() >= 3) throw new Error("3+ mandatory outputs");
                     if (outputs.size() != 0 && !returnType.equals("void") && !returnType.equals("VULKAN_HPP_NAMESPACE::Result")) throw new Error("Both return value and output parameters");
                     if (outputs.size() >= 2 && params.get(outputs.get(0)).lenIfNotNull != null) throw new Error("2+ mandatory outputs with at least one array");
+
+                    Var retParam0 = outputs.size() > 0 ? params.get(outputs.get(0)) : null;
+                    Var retParam1 = outputs.size() > 1 ? params.get(outputs.get(1)) : null;
+
+                    String retParam0RawType = retParam0 != null ? retParam0.stripPtr() : "";
+                    String retParam1RawType = retParam1 != null ? retParam1.stripPtr() : "";
+
+                    String retParam0Type = retParam0 != null ? isCreateUnique ? retParam0.uniqueHandle() : retParam0.stripPtr() : "";
+                    String retParam1Type = retParam1 != null ? isCreateUnique ? retParam1.uniqueHandle() : retParam1.stripPtr() : "";
+
                     String ret = enhanced ? switch (outputs.size()) {
-                        case 2 -> "std::pair<" + params.get(outputs.get(0)).stripPtr() + ", " + params.get(outputs.get(1)).stripPtr() + ">";
-                        case 1 -> params.get(outputs.get(0)).lenIfNotNull != null ? "std::vector<" + params.get(outputs.get(0)).stripPtr() + ", VectorAllocator>" : params.get(outputs.get(0)).stripPtr();
+                        case 2 -> "std::pair<" + retParam0Type + ", " + retParam1Type + ">";
+                        case 1 -> retParam0.lenIfNotNull != null ? "std::vector<" + retParam0Type + ", VectorAllocator>" : retParam0Type;
                         default -> returnType.equals("VULKAN_HPP_NAMESPACE::Result") ? "void" : returnType;
                     } : returnType;
 
@@ -680,12 +768,22 @@ public class Generate {
                     // Handle alternative shortened method name (e.g. destroy instead of destroyImage)
                     if (!shortenedMethodName.isEmpty() && useShortenedMethodName == false)
                     {
-                        decl += generate(definition, customVectorAllocator, true);
+                        decl += generate(definition, customVectorAllocator, true, isCreateUnique);
                     }
+
+                    if (enhanced && !isCreateUnique && methodName.startsWith("create"))
+                    {
+                        decl += generate(definition, customVectorAllocator, useShortenedMethodName, true);
+                    }
+
+                    // Determine the method name of the current run
+                    String currentMethodName = useShortenedMethodName ? shortenedMethodName : methodName;
+                    if (isCreateUnique)
+                        currentMethodName += "Unique";
 
                     // Generate template for vector allocator
                     if (enhanced && outputs.size() == 1 && params.get(outputs.get(0)).lenIfNotNull != null) {
-                        if (!customVectorAllocator) decl = generate(definition, true, useShortenedMethodName) + "\n";
+                        if (!customVectorAllocator) decl = generate(definition, true, useShortenedMethodName, isCreateUnique) + "\n";
                         decl += "template<typename VectorAllocator";
                         if (!definition) decl += " = std::allocator<" + params.get(outputs.get(0)).stripPtr() + ">";
                         if (customVectorAllocator) {
@@ -712,7 +810,7 @@ public class Generate {
                         if (!paramTypes.isEmpty()) s.append(",\n");
                         s.append("VectorAllocator& vectorAllocator");
                     }
-                    decl = processTemplate("$0$1($2)$3", decl, useShortenedMethodName ? shortenedMethodName : methodName, s.toString(), handle != null ? " const" : "");
+                    decl = processTemplate("$0$1($2)$3", decl, currentMethodName, s.toString(), handle != null ? " const" : "");
                     if (!definition) return decl + ";\n";
 
                     s.setLength(0);
@@ -725,13 +823,12 @@ public class Generate {
                         }
                         // Generate output variable declarations
                         if (outputs.size() == 2) {
-                            Var p1 = params.get(outputs.get(0)), p2 = params.get(outputs.get(1));
-                            s.append(ret).append(" pair;\n")
-                                    .append(p1.stripPtr()).append("& ").append(p1.prettyName()).append(" = pair.first;\n")
-                                    .append(p2.stripPtr()).append("& ").append(p2.prettyName()).append(" = pair.second;\n");
+                            s   .append(retParam0RawType).append(" ").append(retParam0.prettyName()).append(";\n")
+                                .append(retParam1RawType).append(" ").append(retParam1.prettyName()).append(";\n");
                         } else if (outputs.size() == 1) {
                             Var p = params.get(outputs.get(0));
-                            s.append(ret).append(" ").append(p.prettyName());
+                            s.append(retParam0.lenIfNotNull != null ? "std::vector<" + retParam0RawType + ", VectorAllocator>" : retParam0RawType)
+                                    .append(" ").append(retParam0.prettyName());
                             if (p.lenIfNotNull != null) {
                                 s.append("(").append(paramIndexByName.get(p.lenIfNotNull) != null ?
                                         p.lenIfNotNull : deduceVectorSize(funcName, p.lenIfNotNull)).append(customVectorAllocator ? ", vectorAllocator)" : ")");
@@ -745,9 +842,57 @@ public class Generate {
                     if (!returnType.equals("void")) s.append(" )");
                     s.append(";");
                     // Generate return statement
+
+                    String retParam0Name = outputs.size() > 0 ? retParam0.prettyName() : "";
+                    String retParam1Name = outputs.size() > 1 ? retParam1.prettyName() : "";
+
+                    // Transform output variable names and wrap them in UniqueHandle constructor
+                    if (isCreateUnique)
+                    {
+                        if (retParam0 != null && retParam0.lenIfNotNull != null)
+                        {
+                            // This does not happen.... yet.
+                            throw new Error("Not implemented.");
+                        }
+                        else if (retParam0 != null)
+                        {
+                            if (retParam0Type.startsWith("VULKAN_HPP_NAMESPACE::"))
+                            {
+                                if (handle == null) throw new Error("Expected to have a handle");
+                                String parentTypeName = "VULKAN_HPP_NAMESPACE::Device";
+                                String parentName = paramsPass.get(0) + "->m_hDevice";
+                                String allocCallbacks = "reinterpret_cast<const VULKAN_HPP_NAMESPACE::AllocationCallbacks*>(" + paramsPass.get(0) + "->GetAllocationCallbacks())";
+                                retParam0Name = processTemplate("$0( $1, VULKAN_HPP_NAMESPACE::ObjectDestroy<$2, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>( $3, $4, VULKAN_HPP_DEFAULT_DISPATCHER ) )", retParam0Type, retParam0Name, parentTypeName, parentName, allocCallbacks);
+                            }
+                            else
+                            {
+                                String parentTypeName = handle != null ? handle.name : "NoParent";
+                                String parentName = handle != null ? paramsPass.get(0) : "";
+                                retParam0Name = processTemplate("$0( $1, ObjectDestroy<$2>( $3 ) )", retParam0Type, retParam0Name, parentTypeName, parentName );
+                            }
+                        }
+                        if (retParam1 != null)
+                        {
+                            if (retParam1Type.startsWith("VULKAN_HPP_NAMESPACE::"))
+                            {
+                                if (handle == null) throw new Error("Expected to have a handle");
+                                String parentTypeName = "VULKAN_HPP_NAMESPACE::Device";
+                                String parentName = paramsPass.get(0) + "->m_hDevice";
+                                String allocCallbacks = "reinterpret_cast<const VULKAN_HPP_NAMESPACE::AllocationCallbacks*>(" + paramsPass.get(0) + "->GetAllocationCallbacks())";
+                                retParam1Name = processTemplate("$0( $1, VULKAN_HPP_NAMESPACE::ObjectDestroy<$2, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>( $3, $4, VULKAN_HPP_DEFAULT_DISPATCHER ) )", retParam1Type, retParam1Name, parentTypeName, parentName, allocCallbacks);
+                            }
+                            else
+                            {
+                                String parentTypeName = handle != null ? handle.name : "NoParent";
+                                String parentName = handle != null ? paramsPass.get(0) : "";
+                                retParam1Name = processTemplate("$0( $1, ObjectDestroy<$2>( $3 ) )", retParam1Type, retParam1Name, parentTypeName, parentName );
+                            }
+                        }
+                    }
+
                     String returnValue = enhanced ? switch (outputs.size()) {
-                        case 2 -> "pair";
-                        case 1 -> params.get(outputs.get(0)).prettyName();
+                        case 2 -> ret + "( " + retParam0Name + ", " + retParam1Name + " )";
+                        case 1 -> retParam0Name;
                         default -> "result";
                     } :  "result";
                     if (enhanced && returnType.equals("VULKAN_HPP_NAMESPACE::Result")) { // Check result
@@ -755,7 +900,7 @@ public class Generate {
                         else returnValue = "result, " + returnValue;
                         s.append("\nresultCheck(result, VMA_HPP_NAMESPACE_STRING \"::");
                         if (handle != null) s.append(handle.name).append("::");
-                        s.append(useShortenedMethodName ? shortenedMethodName : methodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
+                        s.append(currentMethodName).append("\");\nreturn createResultValueType(").append(returnValue).append(");");
                     } else if (!ret.equals("void")) s.append("\nreturn ").append(returnValue).append(";");
                     return processTemplate("""
                                 $0 {
@@ -773,10 +918,10 @@ public class Generate {
             if (handle != null) handle.ifdef = handle.ifdef.goTo(defs, funcMatcher.start());
             else ifdef = ifdef.goTo(defs, funcMatcher.start());
 
-            decls.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false, false));
-            defs.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false, false));
-            decls.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false, false));
-            defs.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false, false));
+            decls.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(false, false, false, false));
+            defs.append("\n#ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE\n").append(enhanced.generate(true, false, false, false));
+            decls.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(false, false, false, false));
+            defs.append(sameSignatures ? "#else\n" : "#endif\n").append(simple.generate(true, false, false, false));
             if (sameSignatures) {
                 decls.append("#endif\n");
                 defs.append("#endif\n");
