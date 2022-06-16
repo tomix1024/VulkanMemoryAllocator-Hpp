@@ -773,7 +773,9 @@ public class Generate {
 
                     if (enhanced && !isCreateUnique && methodName.startsWith("create"))
                     {
+                        decl += "#  ifndef VULKAN_HPP_NO_SMART_HANDLE\n";
                         decl += generate(definition, customVectorAllocator, useShortenedMethodName, true);
+                        decl += "#  endif /*VULKAN_HPP_NO_SMART_HANDLE*/\n";
                     }
 
                     // Determine the method name of the current run
